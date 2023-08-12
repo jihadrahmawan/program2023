@@ -1,3 +1,4 @@
+
 from tracemalloc import start
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
 from pymavlink import mavutil # Needed for command message definitions
@@ -10,10 +11,14 @@ import numpy as np
 import cv2
 import serial
 import keyboard
-
+import sys
+import select
+import tty
+import termios
 
 #run mavproxy
-#mavproxy.py --master=/dev/ttyTHS1 --baudrate=57600 --out=udp:127.0.0.1:14551 --out=udp:iplaptop:14550
+#sudo chmod 666 /dev/ttyTHS1
+#mavproxy.py --master=/dev/ttyTHS1 --baudrate=115200 --out=udp:127.0.0.1:14551 --out=udp:iplaptop:14550
 
 #dronekit
 vehicle = None
@@ -96,46 +101,45 @@ def change_direction(target, real, speed, threshold):
 
 
 def IK_YAW_COMPASS (velocityx, velocityy):
-
     new_x=round (((velocityx*(math.cos(vehicle.attitude.yaw))) - (velocityy*(math.sin(vehicle.attitude.yaw)))),1)
     new_y=round (((velocityy*(math.sin(vehicle.attitude.yaw))) + (velocityx*(math.cos(vehicle.attitude.yaw)))),1)
     return new_x, new_y
 
+def isData():
+	return select.select([sys.stdin],[],[],0)==([sys.stdin],[],[])
+
 def user_input():
-    if keyboard.is_pressed('a'):
-        strat=1
-    if keyboard.is_pressed('s'):
-        strat=2
-    return start
+    global posStrat
+    if isData():
+        val = sys.stdin.read(1)
+        if (val == 'a' or val == 'A'):
+            posStrat = 1
+        if (val == 's' or val == 'S'):
+            posStrat = 2
 
 
 if __name__ == '__main__':
 
+    old_settings = termios.tcgetattr(sys.stdin)
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
     vehicle = connect('127.0.0.1:14551', wait_ready=False, rate=15, source_system=255, source_component=0)
     vehicle.wait_ready(True, raise_exception=False)
-
     try :
+        tty.setcbreak(sys.stdin.fileno())
         while(1):
             data = arduino_data.readline()
             wait_ready_ardu+=1
             if wait_ready_ardu>15:
                 lidar_depan, lidar_bawah, lidar_kanan, lidar_kiri = arduino_read(data)
-                posStrat = user_input()
+                #posStrat = user_input()
 
                 if posStrat> 0 :
                     if step_mission == 0:
                         vehicle.mode = VehicleMode("GUIDED")
-                        if vehicle.mode is not  VehicleMode("GUIDED"):
-                            message='set to Guided mode'
-                            vehicle.mode = VehicleMode("GUIDED")
-                        else:
-                            message='Reset to Guided mode'
-                            vehicle.armed=True
-                            global_counter+=1
-                            if global_counter>=20: #delay sejenak utk arming
-                                step_mission=2
-                                global_counter=0
+                        global_counter+=1
+                        if global_counter>=5 and lidar_bawah is not 0: #delay sejenak utk arming
+                            step_mission=2
+                            global_counter=0
 
                     if step_mission == 2:
                         if vehicle.armed:
@@ -151,8 +155,8 @@ if __name__ == '__main__':
                     
                     if step_mission == 3:
                         if posStrat == 1:
-                            nilaiLidarKananWallFollowingStartA = 120  #========================  SET POINT A1
-                            nilaiLidarDepanAmbilLogitsic = 400 #======================== A2
+                            nilaiLidarKananWallFollowingStartA = 104  #========================  SET POINT A1
+                            nilaiLidarDepanAmbilLogitsic = 550 #======================== A2
                             if VY_ISINVERTED :
                                 vy = change_direction(nilaiLidarKananWallFollowingStartA,lidar_kanan,SPEED_XY,15) * -1
                             else:
@@ -190,12 +194,12 @@ if __name__ == '__main__':
                                 if global_counter>delayAmbilLogistik:
                                     global_counter = 0
                                     step_mission = 4
-                        velocity(vxRotated,vyRptated,vz)
+                        velocity(vxRotated,vyRotated,vz)
                     if step_mission == 4:
                         #geser ke maju
                         if posStrat == 1:
-                            nilaiLidarKananWallFollowingStartA = 120 #======================== A3
-                            nilaiLidarDepanAmbilLogitsic = 120 #======================== A4
+                            nilaiLidarKananWallFollowingStartA = 123 #======================== A3
+                            nilaiLidarDepanAmbilLogitsic = 103 #======================== A4
                             if VY_ISINVERTED :
                                 vy = change_direction(nilaiLidarKananWallFollowingStartA,lidar_kanan,SPEED_XY,15) * -1
                             else:
@@ -204,7 +208,7 @@ if __name__ == '__main__':
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15) * -1
                             else:
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15)
-                            vxRotated, vyRptated = IK_YAW_COMPASS(vx,vy)
+                            vxRotated, vyRotated = IK_YAW_COMPASS(vx,vy)
                         if posStrat == 2:
                             nilaiLidarKiriWallFollowingStartA = 120 #======================== B3
                             nilaiLidarDepanAmbilLogitsic = 120 #======================== B4
@@ -216,7 +220,7 @@ if __name__ == '__main__':
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15) * -1
                             else:
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15)
-                            vxRotated, vyRptated = IK_YAW_COMPASS(vx,vy)
+                            vxRotated, vyRotated = IK_YAW_COMPASS(vx,vy)
                         if change_alt_state:
                             vz = -SPEED_CHANGE_ALTITUDE
                             if lidar_bawah>=80:
@@ -232,12 +236,12 @@ if __name__ == '__main__':
                                 step_mission = 5
                                 global_counter = 0
 
-                        velocity(vxRotated,vyRptated,vz)
+                        velocity(vxRotated,vyRotated,vz)
                     if step_mission == 5:
                         #geser ke keranjang
                         if posStrat == 1:
-                            nilaiLidarKananWallFollowingStartA = 300 #======================== A5
-                            nilaiLidarDepanAmbilLogitsic = 120 #======================== A6
+                            nilaiLidarKananWallFollowingStartA = 474 #======================== A5
+                            nilaiLidarDepanAmbilLogitsic = 104 #======================== A6
                             if VY_ISINVERTED :
                                 vy = change_direction(nilaiLidarKananWallFollowingStartA,lidar_kanan,SPEED_XY,15) * -1
                             else:
@@ -246,7 +250,7 @@ if __name__ == '__main__':
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15) * -1
                             else:
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15)
-                            vxRotated, vyRptated = IK_YAW_COMPASS(vx,vy)
+                            vxRotated, vyRotated = IK_YAW_COMPASS(vx,vy)
                              
                         if posStrat == 2:
                             nilaiLidarKiriWallFollowingStartA = 300 #======================== B5
@@ -259,7 +263,7 @@ if __name__ == '__main__':
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15) * -1
                             else:
                                 vx = change_direction(nilaiLidarDepanAmbilLogitsic,lidar_depan,SPEED_XY,15)
-                            vxRotated, vyRptated = IK_YAW_COMPASS(vx,vy)
+                            vxRotated, vyRotated = IK_YAW_COMPASS(vx,vy)
  
                         vz = 0
                         if (vx == 0 and vy == 0 and vz == 0):
@@ -270,34 +274,37 @@ if __name__ == '__main__':
                                 vehicle.mode = VehicleMode("LAND")
                                 global_counter = 0
 
-                        velocity(vxRotated,vyRptated,vz)
+                        velocity(vxRotated,vyRotated,vz)
                     
 
 
-         
+                print("[INFO] LIDAR DEPAN = ", lidar_depan)
+                print("[INFO] LIDAR BAWAH = ", lidar_bawah)
+                print("[INFO] LIDAR KANAN = ", lidar_kanan)
+                print("[INFO] LIDAR KIRI  = ", lidar_kiri)
+                print("[INFO] SYS INFO    = ", message)
+                print("[INFO] VX NON IK   = ", vx)
+                print("[INFO] VY NON IK   = ", vy)
+                print("[INFO] VZ NON IK   = ", vz)
+                print("[INFO] VX OUT IK   = ", vxRotated)
+                print("[INFO] VY OUT IK   = ", vyRotated)
+                print("[INFO] MISSIONSTEP = ", step_mission)
             else:
                 arduino_data.write(b't')
+                print ("Pres A strat A, pres S strat B")
+                user_input()
 
 
                     
             #print info nilai
-            print("[INFO] LIDAR DEPAN = ", lidar_depan)
-            print("[INFO] LIDAR BAWAH = ", lidar_bawah)
-            print("[INFO] LIDAR KANAN = ", lidar_kanan)
-            print("[INFO] LIDAR KIRI  = ", lidar_kiri)
-            print("[INFO] SYS INFO    = ", message)
-            print("[INFO] VX NON IK   = ", vx)
-            print("[INFO] VY NON IK   = ", vy)
-            print("[INFO] VZ NON IK   = ", vz)
-            print("[INFO] VX OUT IK   = ", vxRotated)
-            print("[INFO] VY OUT IK   = ", vyRptated)
-            print("[INFO] MISSIONSTEP = ", step_mission)
+            
 
 
     except KeyboardInterrupt:
         print ("Killed by user")
     finally:
         print ("terminated")
+        termios.tcsetattr(sys.stdin,termios.TCSADRAIN,old_settings) 
         arduino_data.close()
         vehicle.close()
 
