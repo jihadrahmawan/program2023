@@ -1,4 +1,3 @@
-
 from tracemalloc import start
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
 from pymavlink import mavutil # Needed for command message definitions
@@ -132,7 +131,6 @@ if __name__ == '__main__':
             if wait_ready_ardu>15:
                 lidar_depan, lidar_bawah, lidar_kanan, lidar_kiri = arduino_read(data)
                 #posStrat = user_input()
-
                 if posStrat> 0 :
                     if step_mission == 0:
                         vehicle.mode = VehicleMode("GUIDED")
@@ -277,22 +275,24 @@ if __name__ == '__main__':
                         velocity(vxRotated,vyRotated,vz)
                     
 
-
-                print("[INFO] LIDAR DEPAN = ", lidar_depan)
-                print("[INFO] LIDAR BAWAH = ", lidar_bawah)
-                print("[INFO] LIDAR KANAN = ", lidar_kanan)
-                print("[INFO] LIDAR KIRI  = ", lidar_kiri)
-                print("[INFO] SYS INFO    = ", message)
-                print("[INFO] VX NON IK   = ", vx)
-                print("[INFO] VY NON IK   = ", vy)
-                print("[INFO] VZ NON IK   = ", vz)
-                print("[INFO] VX OUT IK   = ", vxRotated)
-                print("[INFO] VY OUT IK   = ", vyRotated)
-                print("[INFO] MISSIONSTEP = ", step_mission)
             else:
                 arduino_data.write(b't')
-                print ("Pres A strat A, pres S strat B")
+                message = 'Pres A strat A, pres S strat B'
                 user_input()
+
+                
+            print("[INFO] SYS INFO    = ", message)
+            print("[INFO] LIDAR DEPAN = ", lidar_depan)
+            print("[INFO] LIDAR BAWAH = ", lidar_bawah)
+            print("[INFO] LIDAR KANAN = ", lidar_kanan)
+            print("[INFO] LIDAR KIRI  = ", lidar_kiri)
+            print("[INFO] VX NON IK   = ", vx)
+            print("[INFO] VY NON IK   = ", vy)
+            print("[INFO] VZ NON IK   = ", vz)
+            print("[INFO] VX OUT IK   = ", vxRotated)
+            print("[INFO] VY OUT IK   = ", vyRotated)
+            print("[INFO] MISSIONSTEP = ", step_mission)
+            print("[INFO] YAW         = ", vehicle.attitude.yaw)
 
 
                     
