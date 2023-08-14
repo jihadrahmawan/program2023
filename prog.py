@@ -194,10 +194,9 @@ if __name__ == '__main__':
                                 if global_counter>delayAmbilLogistik:
                                     step_mission = 4
                                     global_counter = 0
-                        countersend+=1
-                        if countersend>500:
-                            velocity(vxRotated,vyRotated,vz)
-                            countersend = 0
+                        
+                        velocity(vxRotated,vyRotated,vz)
+                        countersend = 0
 
                     if step_mission == 4:
                         #geser ke maju
@@ -243,10 +242,9 @@ if __name__ == '__main__':
                                 step_mission = 5
                                 global_counter = 0
 
-                        countersend+=1
-                        if countersend>500:
-                            velocity(vxRotated,vyRotated,vz)
-                            countersend = 0
+                       
+                        velocity(vxRotated,vyRotated,vz)
+                        countersend = 0
 
                     if step_mission == 5:
                         #geser ke keranjang
@@ -286,10 +284,9 @@ if __name__ == '__main__':
                                 vehicle.mode = VehicleMode("LAND")
                                 global_counter = 0
 
-                        countersend+=1
-                        if countersend>500:
-                            velocity(vxRotated,vyRotated,vz)
-                            countersend = 0
+                       
+                        velocity(vxRotated,vyRotated,vz)
+                        countersend = 0
                     
 
                 else:
