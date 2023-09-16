@@ -18,7 +18,7 @@ from mavros_msgs.srv import CommandTOL
 from std_msgs.msg    import Float64
 from std_msgs.msg import Int32MultiArray
 
-pi_2 = 3.141592654 / 2.0
+
 
 class MavController:
     """
@@ -30,7 +30,7 @@ class MavController:
         rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.pose_callback)
         rospy.Subscriber("/mavros/rc/in", RCIn, self.rc_callback)
         rospy.Subscriber("/mavros/global_position/compass_hdg", Float64, self.compass_callback)
-        rospy.Subscriber("arduinoLidar_pub", Int32MultiArray, self.lidar_array_callback)
+        rospy.Subscriber("/arduinoLidar_pub", Int32MultiArray, self.lidar_array_callback)
 
         self.cmd_pos_pub = rospy.Publisher("/mavros/setpoint_position/local", PoseStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=1)
@@ -56,9 +56,6 @@ class MavController:
         self.compass = data
 
     def rc_callback(self, data):
-        """
-        Keep track of the current manual RC values
-        """
         self.rc = data
 
     def pose_callback(self, data):
@@ -203,7 +200,15 @@ if __name__=="__main__":
     rospy.sleep(1)
     rate = rospy.Rate(15)
     while not rospy.is_shutdown():
+        
+        lidar_Depan =  ros_service.lidarArray.data[0] 
+        lidar_bawah =  ros_service.lidarArray.data[1]
+        lidar_kanan =  ros_service.lidarArray.data[2]
+        lidar_kiri =  ros_service.lidarArray.data[3] 
+        print ("Lidar  depan = ", lidar_Depan)
+        print ("Lidar  bawah = ", lidar_bawah)
+        print ("Lidar  kanan = ", lidar_kanan)
+        print ("Lidar  kiri  = ", lidar_kiri)
         print ("Compass data = ", ros_service.compass.data)
-        print ("Lidar   data = ", ros_service.lidarArray.data)
         rate.sleep()
    
