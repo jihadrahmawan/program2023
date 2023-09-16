@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-
 import rospy
 import serial
 from std_msgs.msg import Int32MultiArray
@@ -37,13 +35,12 @@ if __name__=="__main__":
     rospy.init_node('lidar_data')
     arduinoLidar = rospy.Publisher('arduinoLidar_pub', Int32MultiArray, queue_size=1)
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
-    
-    r = rospy.Rate(30) # 10hz
-
+    r = rospy.Rate(30) # 30
     while not rospy.is_shutdown():
         lidar_Depan, lidar_bawah, lidar_kanan, lidar_kiri = arduino_read(arduino_data.readline())
         msgs.data = [lidar_Depan, lidar_bawah, lidar_kanan, lidar_kiri]
+        arduinoLidar.publish(msgs)
         print("[INFO] INFO DATA SEND", msgs.data)
         r.sleep()
-        
+
     arduino_data.close()
