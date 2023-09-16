@@ -121,7 +121,8 @@ if __name__ == '__main__':
 
     old_settings = termios.tcgetattr(sys.stdin)
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
-    vehicle = connect('127.0.0.1:14550', wait_ready=True)
+    #vehicle = connect('127.0.0.1:14550', wait_ready=True)
+    vehicle = connect('/dev/ttyTHS1', wait_ready=True, baud=921600)
     #vehicle.wait_ready(True, raise_exception=False)
     try :
         tty.setcbreak(sys.stdin.fileno())
