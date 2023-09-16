@@ -8,6 +8,7 @@
 
 import rospy
 import tf
+import math
 from geometry_msgs.msg import Pose, PoseStamped, Twist, Quaternion
 from mavros_msgs.msg import OverrideRCIn
 from mavros_msgs.msg import RCIn
@@ -15,6 +16,7 @@ from mavros_msgs.srv import CommandBool
 from mavros_msgs.srv import SetMode
 from mavros_msgs.srv import CommandTOL
 from std_msgs.msg    import Float64
+from std_msgs.msg import Int32MultiArray
 
 pi_2 = 3.141592654 / 2.0
 
@@ -28,6 +30,7 @@ class MavController:
         rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.pose_callback)
         rospy.Subscriber("/mavros/rc/in", RCIn, self.rc_callback)
         rospy.Subscriber("/mavros/global_position/compass_hdg", Float64, self.compass_callback)
+        rospy.Subscriber("arduinoLidar_pub", Int32MultiArray, self.lidar_array_callback)
 
         self.cmd_pos_pub = rospy.Publisher("/mavros/setpoint_position/local", PoseStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=1)
@@ -42,8 +45,12 @@ class MavController:
 
         self.rc = RCIn()
         self.compass = Float64()
+        self.lidarArray = Int32MultiArray()
         self.pose = Pose()
         self.timestamp = rospy.Time()
+
+    def lidar_array_callback(self, data):
+        self.lidarArray = data
     
     def compass_callback(self, data):
         self.compass = data
@@ -196,6 +203,7 @@ if __name__=="__main__":
     rospy.sleep(1)
     rate = rospy.Rate(15)
     while not rospy.is_shutdown():
-        print ("Compass data = ", ros_service.compass)
+        print ("Compass data = ", ros_service.compass.data)
+        print ("Lidar   data = ", ros_service.lidarArray.data)
         rate.sleep()
    
