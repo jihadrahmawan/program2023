@@ -64,34 +64,7 @@ class MavController:
         """
         self.timestamp = data.header.stamp
         self.pose = data.pose
-
-    def goto(self, pose):
-        """
-        Set the given pose as a the next setpoint by sending
-        a SET_POSITION_TARGET_LOCAL_NED message. The copter must
-        be in GUIDED mode for this to work.
-        """
-        pose_stamped = PoseStamped()
-        pose_stamped.header.stamp = self.timestamp
-        pose_stamped.pose = pose
-
-        self.cmd_pos_pub.publish(pose_stamped)
-
-    def goto_xyz_rpy(self, x, y, z, ro, pi, ya):
-        pose = Pose()
-        pose.position.x = x
-        pose.position.y = y
-        pose.position.z = z
-
-        quat = tf.transformations.quaternion_from_euler(ro, pi, ya + pi_2)
-
-        pose.orientation.x = quat[0]
-        pose.orientation.y = quat[1]
-        pose.orientation.z = quat[2]
-        pose.orientation.w = quat[3]
-        self.goto(pose)
-        #print(quat)
-
+   
     def set_vel(self, vx, vy, vz, avx=0, avy=0, avz=0):
         """
         Send comand velocities. Must be in GUIDED mode. Assumes angular
@@ -148,67 +121,42 @@ class MavController:
         self.disarm()
 
 
-'''
-def simple_demo():
-    """
-    A simple demonstration of using mavros commands to control a UAV.
-    """
-   
 
-    print("Takeoff")
-    c.takeoff(0.5)
-    rospy.sleep(3)
-    c.goto_xyz_rpy(0,0,1.2,0,0,0)
-    rospy.sleep(3)
-
-    print("Waypoint 1: position control")
-    c.goto_xyz_rpy(0.0,0.0,1.2,0,0,-1*pi_2)
-    rospy.sleep(2)
-    c.goto_xyz_rpy(0.4,0.0,1.2,0,0,-1*pi_2)
-    rospy.sleep(3)
-    print("Waypoint 2: position control")
-    c.goto_xyz_rpy(0.4,0.0,1.2,0,0,0)
-    rospy.sleep(2)
-    c.goto_xyz_rpy(0.4,0.4,1.2,0,0,0)
-    rospy.sleep(3)
-    print("Waypoint 3: position control")
-    c.goto_xyz_rpy(0.4,0.4,1.2,0,0,pi_2)
-    rospy.sleep(2)
-    c.goto_xyz_rpy(0.0,0.4,1.2,0,0,pi_2)
-    rospy.sleep(3)
-    print("Waypoint 4: position control")
-    c.goto_xyz_rpy(0.0,0.4,1.2,0,0,2*pi_2)
-    rospy.sleep(2)
-    c.goto_xyz_rpy(0.0,0.0,1.2,0,0,2*pi_2)
-    rospy.sleep(3)
-
-    #print("Velocity Setpoint 1")
-    #c.set_vel(0,0.1,0)
-    #rospy.sleep(5)
-    #print("Velocity Setpoint 2")
-    #c.set_vel(0,-0.1,0)
-    #rospy.sleep(5)
-    #print("Velocity Setpoint 3")
-    #c.set_vel(0,0,0)
-    #rospy.sleep(5)
-
-    print("Landing")
-    c.land()
-'''
 if __name__=="__main__":
     ros_service = MavController()
     rospy.sleep(1)
-    rate = rospy.Rate(15)
+    ros_service.takeoff(1) #takeoff 1 meter
+    rospy.sleep(5)
+
+
+    rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        
+        #di isi sendiri vz tidak usah 
+        #lalu di amati pada komponen vx dan vy mana yang kekanan kiri, depan belakang (BUKAN ARAH MATA ANGIN)
+        vx = 0
+        vy = 0.8
+        vz = 0
+        #===================================================
+
         lidar_Depan =  ros_service.lidarArray.data[0] 
         lidar_bawah =  ros_service.lidarArray.data[1]
         lidar_kanan =  ros_service.lidarArray.data[2]
         lidar_kiri =  ros_service.lidarArray.data[3] 
+       
+        
+        compasRadians = math.radians(ros_service.compass.data)
+        
+        IKvx=round (( vx*math.cos(compasRadians) - vy*math.sin(compasRadians) ),2)
+        IKvy=round (( vy*math.cos(compasRadians) + vx*math.sin(compasRadians) ),2)
+
         print ("Lidar  depan = ", lidar_Depan)
         print ("Lidar  bawah = ", lidar_bawah)
         print ("Lidar  kanan = ", lidar_kanan)
         print ("Lidar  kiri  = ", lidar_kiri)
         print ("Compass data = ", ros_service.compass.data)
+        print ("Velocity X data =", IKvx)
+        print ("Velocity Y data =", IKvy)
+
+        ros_service.set_vel(IKvx, IKvy, vz)
         rate.sleep()
    
