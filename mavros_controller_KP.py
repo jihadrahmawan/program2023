@@ -9,6 +9,11 @@
 import rospy
 import tf
 import math
+import sys
+import select
+import tty
+import termios
+
 from geometry_msgs.msg import Pose, PoseStamped, Twist, Quaternion
 from mavros_msgs.msg import OverrideRCIn
 from mavros_msgs.msg import RCIn
@@ -18,7 +23,7 @@ from mavros_msgs.srv import CommandTOL
 from std_msgs.msg    import Float64
 from std_msgs.msg import Int32MultiArray
 
-
+phi = 3.1415926
 
 class MavController:
     """
@@ -33,7 +38,6 @@ class MavController:
 
         self.cmd_pos_pub = rospy.Publisher("/mavros/setpoint_position/local", PoseStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=1)
-       
 
         # mode 0 = STABILIZE
         # mode 4 = GUIDED
@@ -42,7 +46,6 @@ class MavController:
         self.arm_service = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_service = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
 
-        self.rc = RCIn()
         self.compass = Float64()
         self.lidarArray = Int32MultiArray()
         self.pose = Pose()
@@ -117,17 +120,38 @@ class MavController:
         resp = self.mode_service(custom_mode="9")
         self.disarm()
 
+def isData():
+	return select.select([sys.stdin],[],[],0)==([sys.stdin],[],[])
+
+
+
+pergerakan=0
+posStrat = 0
+
+def user_input():
+    global posStrat
+    if isData():
+        val = sys.stdin.read(1)
+        if (val == 'a' or val == 'A'):
+            posStrat = 1
+        if (val == 's' or val == 'S'):
+            posStrat = 2
 
 
 if __name__=="__main__":
+    old_settings = termios.tcgetattr(sys.stdin)
     ros_service = MavController()
     rospy.sleep(1)
-    ros_service.takeoff(1) #takeoff 1 meter
+    ros_service.takeoff(2) #takeoff 1 meter
     rospy.sleep(5)
 
 
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(5)
+    #tty.setcbreak(sys.stdin.fileno())
     while not rospy.is_shutdown():
+
+       
+
         #di isi sendiri vz tidak usah 
         #lalu di amati pada komponen vx dan vy mana yang kekanan kiri, depan belakang (BUKAN ARAH MATA ANGIN)
         vx = 0
@@ -141,10 +165,10 @@ if __name__=="__main__":
         lidar_kiri =  ros_service.lidarArray.data[3] 
        
         
-        compasRadians = math.radians(ros_service.compass.data)
-        
-        IKvx=round (( vx*math.cos(compasRadians) - vy*math.sin(compasRadians) ),2)
-        IKvy=round (( vy*math.cos(compasRadians) + vx*math.sin(compasRadians) ),2)
+        compasRadians = ros_service.compass.data * (phi / 180)
+  
+        IKvx= round (( (vy*math.cos(compasRadians)) + (vx*math.sin(compasRadians)) ),1)
+        IKvy= -round (( (vy*math.cos(compasRadians)) - (vx*math.sin(compasRadians)) ),1)
 
         print ("Lidar  depan = ", lidar_Depan)
         print ("Lidar  bawah = ", lidar_bawah)
@@ -156,4 +180,6 @@ if __name__=="__main__":
 
         ros_service.set_vel(IKvx, IKvy, vz)
         rate.sleep()
-   
+    
+    print("terminated")
+    termios.tcsetattr(sys.stdin,termios.TCSADRAIN,old_settings) 
