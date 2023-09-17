@@ -155,7 +155,7 @@ if __name__=="__main__":
         #di isi sendiri vz tidak usah 
         #lalu di amati pada komponen vx dan vy mana yang kekanan kiri, depan belakang (BUKAN ARAH MATA ANGIN)
         vx = 0
-        vy = 0.8
+        vy = 1
         vz = 0
         #===================================================
 
@@ -164,11 +164,15 @@ if __name__=="__main__":
         lidar_kanan =  ros_service.lidarArray.data[2]
         lidar_kiri =  ros_service.lidarArray.data[3] 
        
-        
-        compasRadians = ros_service.compass.data * (phi / 180)
+        if  ros_service.compass.data<180:
+            sudut =  ros_service.compass.data
+        else:
+            sudut = 180 -  ros_service.compass.data
+
+        compasRadians = sudut * phi / 180
   
-        IKvx= round (( (vy*math.cos(compasRadians)) + (vx*math.sin(compasRadians)) ),1)
-        IKvy= -round (( (vy*math.cos(compasRadians)) - (vx*math.sin(compasRadians)) ),1)
+        IKvx= round (( (vy*math.cos(compasRadians)) + (vx*math.sin(compasRadians)) ),2)
+        IKvy= -round (( (vy*math.cos(compasRadians)) - (vx*math.sin(compasRadians)) ),2)
 
         print ("Lidar  depan = ", lidar_Depan)
         print ("Lidar  bawah = ", lidar_bawah)
