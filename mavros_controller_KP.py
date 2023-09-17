@@ -28,13 +28,12 @@ class MavController:
 
         rospy.init_node("mav_control_node")
         rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.pose_callback)
-        rospy.Subscriber("/mavros/rc/in", RCIn, self.rc_callback)
         rospy.Subscriber("/mavros/global_position/compass_hdg", Float64, self.compass_callback)
         rospy.Subscriber("/arduinoLidar_pub", Int32MultiArray, self.lidar_array_callback)
 
         self.cmd_pos_pub = rospy.Publisher("/mavros/setpoint_position/local", PoseStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=1)
-        self.rc_override = rospy.Publisher("/mavros/rc/override", OverrideRCIn, queue_size=1)
+       
 
         # mode 0 = STABILIZE
         # mode 4 = GUIDED
@@ -55,8 +54,6 @@ class MavController:
     def compass_callback(self, data):
         self.compass = data
 
-    def rc_callback(self, data):
-        self.rc = data
 
     def pose_callback(self, data):
         """
