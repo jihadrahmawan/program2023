@@ -119,6 +119,24 @@ def user_input():
         if (val == 's' or val == 'S'):
             posStrat = 2
 
+def fuzzy_wall(input, set_point, maxoutput):
+    if input<(set_point-50):
+        out = maxoutput
+    if input>=set_point-50 and input>set_point-30:
+        out = maxoutput*0.75
+    if input>=set_point-30 and input<=set_point-10:
+        out = maxoutput*0.35
+    if input>set_point-10 and input<=set_point+10:
+        out = 0
+    if input>set_point+10 and input<=set_point+30: 
+        out = maxoutput*-0.35
+    if input>set_point+30 and input<=set_point+50: 
+        out = maxoutput*-0.75
+    if input>set_point+50:
+        out = -maxoutput
+    return out
+
+
 
 if __name__ == '__main__':
 
@@ -157,7 +175,9 @@ if __name__ == '__main__':
                     if step_mission == 2:
                         
                         vx = 0.6
+                        vy = fuzzy_wall(lidar_kanan,120,0.6)
 
+                        '''
                         if lidar_kanan < 80 :
                             vy = 0.8
                         if lidar_kanan >=80 and lidar_kanan<120:
@@ -168,15 +188,19 @@ if __name__ == '__main__':
                             vy = -0.4
                         if lidar_kanan>190:
                             vy = -0.8
+                        '''
 
-
+                        if lidar_bawah<80:
+                            vz = 0.2
+                        else:
+                            vz = 0
                         
-                        vz = 0
+                        
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if lidar_depan>50 and lidar_depan<300:
+                        if lidar_depan>50 and lidar_depan<200:
                             vehicle.mode = VehicleMode("LAND")
                         
 
