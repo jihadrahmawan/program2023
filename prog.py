@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from tracemalloc import start
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
 from pymavlink import mavutil # Needed for command message definitions
@@ -21,10 +23,6 @@ import termios
 
 #dronekit
 vehicle = None
-
-# Arduino connection 
-connection_bus='/dev/ttyUSB0'
-baud=57600
 wait_ready_ardu=0
 global_counter = 0
 
@@ -56,6 +54,7 @@ message  = ''
 vy = 0; vx = 0; vz= 0
 vxRotated = 0; vyRotated = 0;
 countersend = 0
+
 def arduino_read(strings):
     try:
         dpn = int (strings[0:4])
@@ -88,21 +87,10 @@ def velocity (x, y, z):
             0, 0)
     vehicle.send_mavlink(msg)
 
+def servo_out(pin, value):
+	msg = vehicle.message_factory.command_long_encode(0,0,mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,pin,value,0, 0, 0, 0, 0)
+	vehicle.send_mavlink(msg)
 
-def change_direction(target, real, speed, threshold):
-    if real<(target-threshold):
-        output=speed
-    if real>(target+threshold):
-        output=-speed
-    if real<=(target+threshold) and real>=(target-threshold):
-        output=0.0
-    return output
-
-
-def IK_YAW_COMPASS (velocityx, velocityy):
-    new_x=round (((velocityx*(math.cos(vehicle.attitude.yaw))) - (velocityy*(math.sin(vehicle.attitude.yaw)))),1)
-    new_y=round (((velocityy*(math.sin(vehicle.attitude.yaw))) + (velocityx*(math.cos(vehicle.attitude.yaw)))),1)
-    return new_x, new_y
 
 def isData():
 	return select.select([sys.stdin],[],[],0)==([sys.stdin],[],[])
@@ -120,50 +108,58 @@ def user_input():
 if __name__ == '__main__':
 
     old_settings = termios.tcgetattr(sys.stdin)
+    # Arduino connection 
+    connection_bus='/dev/ttyUSB0'
+    baud=57600
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
-    #vehicle = connect('127.0.0.1:14550', wait_ready=True)
-    vehicle = connect('/dev/ttyTHS1', wait_ready=True, baud=921600)
-    #vehicle.wait_ready(True, raise_exception=False)
+    vehicle = connect('127.0.0.1:14550', wait_ready=None)
+    vehicle.wait_ready(True, timeout=60)
     try :
         tty.setcbreak(sys.stdin.fileno())
         while(1):
             data = arduino_data.readline()
             wait_ready_ardu+=1
-            if wait_ready_ardu>15:
+            if wait_ready_ardu>2:
                 lidar_depan, lidar_bawah, lidar_kanan, lidar_kiri = arduino_read(data)
                 #posStrat = user_input()
                 if posStrat> 0 :
                     if step_mission == 0:
                         vehicle.mode = VehicleMode("GUIDED")
                         global_counter+=1
-                        if global_counter>=5 and lidar_bawah != 0: #delay sejenak utk arming
-                            step_mission=2
+                        if global_counter>=2 and lidar_bawah != 0: #delay sejenak utk arming
+                            step_mission=1
                             global_counter=0
 
-                    if step_mission == 2:
+                    if step_mission == 1:
                         if vehicle.armed:
                             message='warming take off'
-                            alt_warming=2
-                            vehicle.simple_takeoff(alt_warming)
-                            if lidar_bawah>=80:
+                            vehicle.simple_takeoff(1.2)
+                            if lidar_bawah>=110:
                                 global_counter = 0
                                 change_alt_state=False
                                 step_mission=3
                         else:
                             vehicle.armed=True
                     
+                    if step_mission == 2:
+                        vx = 0
+                        vy = 0.8
+                        vz = 0
+		   
+                    
                     
                     
 
                 else:
-                    arduino_data.write(b't')
                     message = 'Pres A strat A, pres S strat B'
                     user_input()
 
-            new_x=round (((vx*(math.cos(vehicle.attitude.yaw))) - (vy*(math.sin(vehicle.attitude.yaw)))),1)
-            new_y=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
-            #velocity(new_x,new_y, vz)
+            new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
+            new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),1))*-1
             
+            velocity(new_x,new_y, vz)
+            
+            print("[INFO] SEBELUM TAKE OFF PASTIKAN SELURUH VALUE LIDAR ONLINE!")
             print("[INFO] SYS INFO    = ", message)
             print("[INFO] LIDAR DEPAN = ", lidar_depan)
             print("[INFO] LIDAR BAWAH = ", lidar_bawah)
@@ -179,7 +175,7 @@ if __name__ == '__main__':
             print("[INFO] POS STRAT   = ", posStrat)
 
 
-                    
+            time.sleep(.5)         
             #print info nilai
     
 
