@@ -147,7 +147,7 @@ if __name__ == '__main__':
                         if vehicle.armed:
                             message='warming take off'
                             vehicle.simple_takeoff(4)
-                            if lidar_bawah>=120:
+                            if lidar_bawah>=100:
                                 global_counter = 0
                                 change_alt_state=False
                                 step_mission=2
@@ -167,7 +167,7 @@ if __name__ == '__main__':
                         if lidar_kanan>150 and lidar_kanan<=190:
                             vy = -0.4
                         if lidar_kanan>190:
-                            vy = 0.8
+                            vy = -0.8
 
 
                         
