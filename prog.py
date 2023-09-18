@@ -177,19 +177,6 @@ if __name__ == '__main__':
                         vx = 0.6
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
-                        '''
-                        if lidar_kanan < 80 :
-                            vy = 0.8
-                        if lidar_kanan >=80 and lidar_kanan<120:
-                            vy = 0.4
-                        if lidar_kanan>120 and lidar_kanan<=150:
-                            vy = 0
-                        if lidar_kanan>150 and lidar_kanan<=190:
-                            vy = -0.4
-                        if lidar_kanan>190:
-                            vy = -0.8
-                        '''
-
                         if lidar_bawah<80:
                             vz = 0.2
                         else:
@@ -200,11 +187,23 @@ if __name__ == '__main__':
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if lidar_depan>50 and lidar_depan<200:
-                            vehicle.mode = VehicleMode("LAND")
+                        if lidar_depan>50 and lidar_depan<150:
+                           step_mission = 3
+                    
+                    if step_mission == 3:
                         
-
-		   
+                        vy = 0.6
+                        vx = -fuzzy_wall(lidar_depan,120,0.6)
+                        if lidar_bawah<80:
+                            vz = 0.2
+                        else:
+                            vz = 0
+                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
+                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
+                        velocity(new_x,new_y, vz)
+                        print ("Velocity Sending...")
+                        if lidar_depan>300 or lidar_depan == 0:
+                            vehicle.mode = VehicleMode("LAND")
                     
                     
                 else:
