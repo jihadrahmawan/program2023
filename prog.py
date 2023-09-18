@@ -137,6 +137,19 @@ def fuzzy_wall(input, set_point, maxoutput):
     return out
 
 
+lat_tolerant=0.0000100
+lon_tolerant=0.0000100
+alt_waypoint=0 #tinggi waypoint
+point1 = LocationGlobalRelative(-7.6173024,112.8463610, alt_waypoint)
+point2 = LocationGlobalRelative(-7.6171129,112.8464220, alt_waypoint)
+point3 = LocationGlobalRelative(-7.7829337,110.2940199, alt_waypoint)
+point4 = LocationGlobalRelative(-7.7827503,110.2940950, alt_waypoint)
+
+def end_waypoint(point):
+    if  ((point.lat < (vehicle.location.global_relative_frame.lat+lat_tolerant)) and (point.lat > (vehicle.location.global_relative_frame.lat-lat_tolerant))) and ((point.lon < (vehicle.location.global_relative_frame.lon+lon_tolerant)) and (point.lon > (vehicle.location.global_relative_frame.lon-lon_tolerant))):
+        return 1
+    else:
+        return 0
 
 if __name__ == '__main__':
 
@@ -174,10 +187,10 @@ if __name__ == '__main__':
                     
                     if step_mission == 2:
                         
-                        vx = 0.5
+                        vx = 0.4
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
-                        if lidar_bawah<80:
+                        if lidar_bawah<100:
                             vz = -0.2
                         else:
                             vz = 0
@@ -186,26 +199,27 @@ if __name__ == '__main__':
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if lidar_depan>50 and lidar_depan<270:
+                        if lidar_depan>50 and lidar_depan<180:
                            counter=counter+1
                            if counter>5:
-                                step_mission = 3
+                                step_mission = 5
                                 counter = 0
                         else:
                             counter = 0
+                    '''
                     if step_mission == 3:
                         
-                        vx = -fuzzy_wall(lidar_depan,250,0.4)
+                        vx = -fuzzy_wall(lidar_depan,350,0.4)
                         vy = fuzzy_wall(lidar_kanan,120,0.4)
                        
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                        
                         print ("Velocity Sending...")
-                        if lidar_bawah<40:
+                        if lidar_bawah<30:
                             vz = 0
                             counter=counter+1
-                            if counter>2:
+                            if counter>20:
                                 step_mission = 4
                                 counter = 0
                         else:
@@ -215,7 +229,7 @@ if __name__ == '__main__':
                     
                     if step_mission == 4:
                         
-                        vx = 0.3
+                        vx = 0.4
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
                         if lidar_bawah<100:
@@ -235,12 +249,12 @@ if __name__ == '__main__':
                         else:
                             counter = 0
                     
-                    
+                    '''
                     if step_mission == 5:
                         
                         vy = 0.8
                         vx = -fuzzy_wall(lidar_depan,120,0.6)
-                        if lidar_bawah<80:
+                        if lidar_bawah<100:
                             vz = -0.1
                         else:
                             vz = 0
@@ -248,13 +262,55 @@ if __name__ == '__main__':
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if (lidar_depan>300 or lidar_depan == 0) and lidar_kanan > 400:
+                        if (lidar_depan>300 or lidar_depan == 0) and lidar_kanan > 600:
                             counter=counter+1
                             if counter>5:
-                                vehicle.mode = VehicleMode("LAND")
+                                step_mission == 6
+                                #vehicle.mode = VehicleMode("LAND")
                                 counter = 0
                         else:
                             counter = 0
+                    
+                    if step_mission == 6:
+                        counter=counter+1
+                        if counter == 1:
+                            vehicle.simple_goto(point1)
+                        print ("Go to wayppint 1")
+                        if end_waypoint(point1):
+                            step_mission = 7
+                            counter=0
+
+                    if step_mission == 7:
+                        counter=counter+1
+                        if counter == 1:
+                            vehicle.simple_goto(point1)
+                        print ("Go to wayppint 2")
+                        if end_waypoint(point2):
+                            step_mission = 8
+                            counter=0
+
+                    if step_mission == 8:
+                        counter=counter+1
+                        if counter == 1:
+                            vehicle.simple_goto(point1)
+                        print ("Go to wayppint 3")
+                        if end_waypoint(point3):
+                            step_mission = 9
+                            counter=0
+
+                    if step_mission == 9:
+                        counter=counter+1
+                        if counter == 1:
+                            vehicle.simple_goto(point1)
+                        print ("Go to wayppint 4")
+                        if end_waypoint(point4):
+                            vehicle.mode = VehicleMode("LAND")
+                            counter=0
+                    
+
+
+                        
+                    
                            
                     
                 else:
