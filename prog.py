@@ -61,7 +61,7 @@ message  = ''
 vy = 0; vx = 0; vz= 0
 vxRotated = 0; vyRotated = 0;
 countersend = 0
-
+counter = 0
 def arduino_read(strings):
     try:
         dpn = int (strings[0:4])
@@ -121,9 +121,9 @@ def user_input():
 
 def fuzzy_wall(input, set_point, maxoutput):
     if input<(set_point-50):
-        out = maxoutput
+        out = maxoutput*0.95
     if input>=set_point-50 and input>set_point-30:
-        out = maxoutput*0.75
+        out = maxoutput*0.65
     if input>=set_point-30 and input<=set_point-10:
         out = maxoutput*0.35
     if input>set_point-10 and input<=set_point+10:
@@ -131,9 +131,9 @@ def fuzzy_wall(input, set_point, maxoutput):
     if input>set_point+10 and input<=set_point+30: 
         out = maxoutput*-0.35
     if input>set_point+30 and input<=set_point+50: 
-        out = maxoutput*-0.75
+        out = maxoutput*-0.65
     if input>set_point+50:
-        out = -maxoutput
+        out = maxoutput*-0.95
     return out
 
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
                     
                     if step_mission == 2:
                         
-                        vx = 0.6
+                        vx = 0.8
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
                         if lidar_bawah<80:
@@ -182,29 +182,80 @@ if __name__ == '__main__':
                         else:
                             vz = 0
                         
+                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
+                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
+                        velocity(new_x,new_y, vz)
+                        print ("Velocity Sending...")
+                        if lidar_depan>50 and lidar_depan<270:
+                           counter=counter+1
+                           if counter>20:
+                                step_mission = 3
+                                counter = 0
+                        else:
+                            counter = 0
+                    if step_mission == 3:
+                        
+                        vx = -fuzzy_wall(lidar_depan,250,0.4)
+                        vy = fuzzy_wall(lidar_kanan,120,0.4)
+                       
+                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
+                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
+                       
+                        print ("Velocity Sending...")
+                        if lidar_bawah<40:
+                            vz = 0
+                            counter=counter+1
+                            if counter>20:
+                                step_mission = 4
+                                counter = 0
+                        else:
+                            vz = 0.15
+                            counter = 0
+                        velocity(new_x,new_y, vz)
+                    
+                    if step_mission == 4:
+                        
+                        vx = 0.45
+                        vy = fuzzy_wall(lidar_kanan,120,0.6)
+
+                        if lidar_bawah<100:
+                            vz = -0.2
+                        else:
+                            vz = 0
                         
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if lidar_depan>50 and lidar_depan<150:
-                           step_mission = 3
+                        if lidar_depan>50 and lidar_depan<180:
+                            counter=counter+1
+                            if counter>20:
+                                step_mission = 5
+                                counter = 0
+                        else:
+                            counter = 0
                     
-                    if step_mission == 3:
+                    
+                    if step_mission == 5:
                         
-                        vy = 0.6
+                        vy = 0.8
                         vx = -fuzzy_wall(lidar_depan,120,0.6)
                         if lidar_bawah<80:
-                            vz = -0.2
+                            vz = -0.1
                         else:
                             vz = 0
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
-                        if lidar_depan>300 or lidar_depan == 0:
-                            vehicle.mode = VehicleMode("LAND")
-                    
+                        if (lidar_depan>300 or lidar_depan == 0) and lidar_kanan > 400:
+                            counter=counter+1
+                            if counter>20:
+                                vehicle.mode = VehicleMode("LAND")
+                                counter = 0
+                        else:
+                            counter = 0
+                           
                     
                 else:
                     message = 'Pres A strat A, pres S strat B'
