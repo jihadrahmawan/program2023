@@ -22,8 +22,9 @@ import termios
 #mavproxy.py --master=/dev/ttyUSB0 --baudrate=115200 --out=udp:0.0.0.0:14550 --out=udp:iplaptop:14551
 
 #dronekit
+vehicle = None
 if __name__ == '__main__':
-    
+  
     vehicle = connect('127.0.0.1:14550', wait_ready=None)
     vehicle.wait_ready(True, timeout=60)
 
