@@ -178,7 +178,7 @@ if __name__ == '__main__':
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
                         if lidar_bawah<80:
-                            vz = 0.2
+                            vz = -0.2
                         else:
                             vz = 0
                         
@@ -195,7 +195,7 @@ if __name__ == '__main__':
                         vy = 0.6
                         vx = -fuzzy_wall(lidar_depan,120,0.6)
                         if lidar_bawah<80:
-                            vz = 0.2
+                            vz = -0.2
                         else:
                             vz = 0
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
