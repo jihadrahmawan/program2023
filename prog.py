@@ -121,7 +121,7 @@ def user_input():
 
 def fuzzy_wall(input, set_point, maxoutput):
     if input<(set_point-50):
-        out = maxoutput*0.95
+        out = maxoutput
     if input>=set_point-50 and input>set_point-30:
         out = maxoutput*0.65
     if input>=set_point-30 and input<=set_point-10:
@@ -133,7 +133,7 @@ def fuzzy_wall(input, set_point, maxoutput):
     if input>set_point+30 and input<=set_point+50: 
         out = maxoutput*-0.65
     if input>set_point+50:
-        out = maxoutput*-0.95
+        out = -maxoutput
     return out
 
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
                     
                     if step_mission == 2:
                         
-                        vx = 0.8
+                        vx = 0.5
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
                         if lidar_bawah<80:
@@ -188,7 +188,7 @@ if __name__ == '__main__':
                         print ("Velocity Sending...")
                         if lidar_depan>50 and lidar_depan<270:
                            counter=counter+1
-                           if counter>20:
+                           if counter>5:
                                 step_mission = 3
                                 counter = 0
                         else:
@@ -205,17 +205,17 @@ if __name__ == '__main__':
                         if lidar_bawah<40:
                             vz = 0
                             counter=counter+1
-                            if counter>20:
+                            if counter>2:
                                 step_mission = 4
                                 counter = 0
                         else:
-                            vz = 0.15
+                            vz = 0.2
                             counter = 0
                         velocity(new_x,new_y, vz)
                     
                     if step_mission == 4:
                         
-                        vx = 0.45
+                        vx = 0.3
                         vy = fuzzy_wall(lidar_kanan,120,0.6)
 
                         if lidar_bawah<100:
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                         print ("Velocity Sending...")
                         if lidar_depan>50 and lidar_depan<180:
                             counter=counter+1
-                            if counter>20:
+                            if counter>5:
                                 step_mission = 5
                                 counter = 0
                         else:
@@ -250,7 +250,7 @@ if __name__ == '__main__':
                         print ("Velocity Sending...")
                         if (lidar_depan>300 or lidar_depan == 0) and lidar_kanan > 400:
                             counter=counter+1
-                            if counter>20:
+                            if counter>5:
                                 vehicle.mode = VehicleMode("LAND")
                                 counter = 0
                         else:
