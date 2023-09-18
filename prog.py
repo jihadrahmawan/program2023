@@ -133,11 +133,11 @@ if __name__ == '__main__':
                     if step_mission == 1:
                         if vehicle.armed:
                             message='warming take off'
-                            vehicle.simple_takeoff(1.2)
+                            vehicle.simple_takeoff(1.5)
                             if lidar_bawah>=110:
                                 global_counter = 0
                                 change_alt_state=False
-                                step_mission=3
+                                step_mission=2
                         else:
                             vehicle.armed=True
                     
@@ -145,6 +145,9 @@ if __name__ == '__main__':
                         vx = 0
                         vy = 0.8
                         vz = 0
+                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
+                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),1))*-1
+                        velocity(new_x,new_y, vz)
 		   
                     
                     
@@ -154,10 +157,7 @@ if __name__ == '__main__':
                     message = 'Pres A strat A, pres S strat B'
                     user_input()
 
-            new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
-            new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),1))*-1
             
-            velocity(new_x,new_y, vz)
             
             print("[INFO] SEBELUM TAKE OFF PASTIKAN SELURUH VALUE LIDAR ONLINE!")
             print("[INFO] SYS INFO    = ", message)
