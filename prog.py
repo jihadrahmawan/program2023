@@ -65,18 +65,26 @@ countersend = 0
 def arduino_read(strings):
     try:
         dpn = int (strings[0:4])
+        if dpn<0:
+            dpn = 0
     except ValueError:
         dpn = 0
     try:
         bwh = int  (strings[4:8])
+        if bwh<0:
+            bwh = 0
     except ValueError:
         bwh = 0
     try :
         kan = int  (strings[8:12])
+        if kan<0:
+            kan = 0
     except ValueError:
         kan = 0
     try:
         kir = int  (strings[12:16])
+        if kir<0:
+            kir = 0
     except ValueError:
         kir = 0
 
@@ -119,7 +127,6 @@ if __name__ == '__main__':
     connection_bus='/dev/ttyUSB0'
     baud=57600
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
-   
     try :
         tty.setcbreak(sys.stdin.fileno())
         while(1):
@@ -139,8 +146,8 @@ if __name__ == '__main__':
                     if step_mission == 1:
                         if vehicle.armed:
                             message='warming take off'
-                            vehicle.simple_takeoff(1.5)
-                            if lidar_bawah>=110:
+                            vehicle.simple_takeoff(4)
+                            if lidar_bawah>=120:
                                 global_counter = 0
                                 change_alt_state=False
                                 step_mission=2
@@ -148,18 +155,34 @@ if __name__ == '__main__':
                             vehicle.armed=True
                     
                     if step_mission == 2:
-                        vx = 0
-                        vy = 0.8
+                        
+                        vx = 0.6
+
+                        if lidar_kanan < 80 :
+                            vy = 0.8
+                        if lidar_kanan >=80 and lidar_kanan<120:
+                            vy = 0.4
+                        if lidar_kanan>120 and lidar_kanan<=150:
+                            vy = 0
+                        if lidar_kanan>150 and lidar_kanan<=190:
+                            vy = -0.4
+                        if lidar_kanan>190:
+                            vy = 0.8
+
+
+                        
                         vz = 0
-                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
-                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),1))*-1
+                        new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),2)
+                        new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),2))*-1
                         velocity(new_x,new_y, vz)
                         print ("Velocity Sending...")
+                        if lidar_depan>50 and lidar_depan<300:
+                            vehicle.mode = VehicleMode("LAND")
+                        
+
 		   
                     
                     
-                    
-
                 else:
                     message = 'Pres A strat A, pres S strat B'
                     user_input()
@@ -182,7 +205,7 @@ if __name__ == '__main__':
             print("[INFO] POS STRAT   = ", posStrat)
 
 
-            time.sleep(.5)         
+            #time.sleep(.5)         
             #print info nilai
     
 
