@@ -22,10 +22,16 @@ import termios
 #mavproxy.py --master=/dev/ttyUSB0 --baudrate=115200 --out=udp:0.0.0.0:14550 --out=udp:iplaptop:14551
 
 #dronekit
-vehicle = None
+if __name__ == '__main__':
+    
+    vehicle = connect('127.0.0.1:14550', wait_ready=None)
+    vehicle.wait_ready(True, timeout=60)
+
+    
 wait_ready_ardu=0
 global_counter = 0
-
+new_x = 0
+new_y = 0 
 
 #PID lidar wall following
 lidar_depan = 0; lidar_bawah = 0; lidar_kanan = 0; lidar_kiri = 0;
@@ -75,14 +81,14 @@ def arduino_read(strings):
 
     return dpn, bwh, kan, kir
 
-def velocity (x, y, z):
+def velocity (dx, dy, dz):
     msg = vehicle.message_factory.set_position_target_local_ned_encode(
             0,       # time_boot_ms (not used)
             0, 0,    # target system, target component
             mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
             0b0000111111000111, # type_mask (only speeds enabled)
             0, 0, 0, # x, y, z positions (not used)
-            x, y, z, # x, y, z velocity in m/s
+            dx,dy, dz, # x, y, z velocity in m/s
             0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)
     vehicle.send_mavlink(msg)
@@ -112,8 +118,7 @@ if __name__ == '__main__':
     connection_bus='/dev/ttyUSB0'
     baud=57600
     arduino_data = serial.Serial(connection_bus,baud, timeout=1)
-    vehicle = connect('127.0.0.1:14550', wait_ready=None)
-    vehicle.wait_ready(True, timeout=60)
+   
     try :
         tty.setcbreak(sys.stdin.fileno())
         while(1):
@@ -148,6 +153,7 @@ if __name__ == '__main__':
                         new_x=round (((vy*(math.sin(vehicle.attitude.yaw))) + (vx*(math.cos(vehicle.attitude.yaw)))),1)
                         new_y=(round (((vy*(math.cos(vehicle.attitude.yaw))) - (vx*(math.sin(vehicle.attitude.yaw)))),1))*-1
                         velocity(new_x,new_y, vz)
+                        print ("Velocity Sending...")
 		   
                     
                     
